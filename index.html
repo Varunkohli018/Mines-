@@ -3,76 +3,158 @@
 <head>
   <title>Mines Game</title>
   <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 20px;
+      transition: background 0.3s, color 0.3s;
+    }
     #grid {
       display: grid;
       grid-template-columns: repeat(5, 60px);
       gap: 5px;
-      margin-top: 20px;
+      justify-content: center;
+      margin: 20px auto;
     }
     .cell {
       width: 60px;
       height: 60px;
-      font-size: 18px;
-      text-align: center;
-      background-color: lightgray;
+      font-size: 20px;
+      border: 2px solid #aaa;
+      background-color: #ddd;
+      border-radius: 10px;
+      transition: 0.2s;
+    }
+    .cell:hover {
+      background-color: #ccc;
+      cursor: pointer;
     }
     .mine {
-      background-color: red;
+      background-color: #f44336;
+      color: white;
     }
     .safe {
-      background-color: lightgreen;
+      background-color: #8bc34a;
+      color: white;
+    }
+    #popup {
+      display: none;
+      position: fixed;
+      top: 40%;
+      left: 30%;
+      background: white;
+      padding: 20px;
+      border: 2px solid black;
+      z-index: 1000;
+    }
+    body.dark {
+      background-color: #222;
+      color: white;
+    }
+    body.dark .cell {
+      background-color: #444;
+      border-color: #666;
+    }
+    body.dark .safe {
+      background-color: #4caf50;
+    }
+    body.dark .mine {
+      background-color: #e53935;
     }
   </style>
 </head>
 <body>
   <h2>Mines Game</h2>
-  <label>Number of Mines (1-10):</label>
+
+  <label>Number of Mines (1–10):</label>
   <input type="number" id="mineCount" min="1" max="10" value="5">
   <button onclick="startGame()">Start Game</button>
+  <button onclick="toggleTheme()">Toggle Dark Mode</button>
+
+  <p>Time: <span id="timer">0</span> sec | Score: <span id="score">0</span></p>
 
   <div id="grid"></div>
+
+  <div id="popup">
+    <p id="popupMessage"></p>
+    <button onclick="closePopup()">OK</button>
+  </div>
 
   <script>
     let mines = [];
     let clicked = [];
+    let score = 0;
+    let seconds = 0;
+    let timerInterval;
 
     function startGame() {
       const grid = document.getElementById('grid');
       grid.innerHTML = '';
       mines = [];
       clicked = [];
+      score = 0;
+      seconds = 0;
+      document.getElementById('score').innerText = 0;
+      document.getElementById('timer').innerText = 0;
+      clearInterval(timerInterval);
+      startTimer();
 
       const mineCount = parseInt(document.getElementById('mineCount').value);
-      
-      // Create 25 buttons
+
       for (let i = 0; i < 25; i++) {
         const btn = document.createElement('button');
         btn.className = 'cell';
         btn.id = 'cell' + i;
         btn.onclick = () => handleClick(i);
+        btn.oncontextmenu = (e) => {
+          e.preventDefault();
+          toggleFlag(i);
+        };
         grid.appendChild(btn);
       }
 
-      // Place mines randomly
       while (mines.length < mineCount) {
         let r = Math.floor(Math.random() * 25);
         if (!mines.includes(r)) {
           mines.push(r);
         }
       }
+
+      predictSafeCell();
     }
 
     function handleClick(index) {
       const btn = document.getElementById('cell' + index);
+      if (btn.innerText === '⚑' || clicked.includes(index)) return;
+
       if (mines.includes(index)) {
         btn.classList.add('mine');
-        alert('Boom! You hit a mine.');
+        showPopup("Boom! You hit a mine.");
         revealMines();
       } else {
-        if (!clicked.includes(index)) {
-          clicked.push(index);
-          btn.classList.add('safe');
-          autoClick();
+        clicked.push(index);
+        btn.classList.add('safe');
+        updateScore();
+        revealAdjacent(index);
+        autoClick();
+        predictSafeCell();
+        checkWin();
+      }
+    }
+
+    function toggleFlag(index) {
+      const btn = document.getElementById('cell' + index);
+      if (btn.innerText === '⚑') {
+        btn.innerText = '';
+      } else if (!clicked.includes(index)) {
+        btn.innerText = '⚑';
+      }
+    }
+
+    function autoClick() {
+      for (let i = 0; i < 25; i++) {
+        if (!mines.includes(i) && !clicked.includes(i)) {
+          return;
         }
       }
     }
@@ -83,113 +165,74 @@
           document.getElementById('cell' + i).classList.add('mine');
         }
       }
+      clearInterval(timerInterval);
     }
 
-    function autoClick() {
+    function revealAdjacent(index) {
+      const row = Math.floor(index / 5);
+      const col = index % 5;
+
+      for (let r = -1; r <= 1; r++) {
+        for (let c = -1; c <= 1; c++) {
+          const newRow = row + r;
+          const newCol = col + c;
+          const newIndex = newRow * 5 + newCol;
+          if (
+            newRow >= 0 && newRow < 5 &&
+            newCol >= 0 && newCol < 5 &&
+            newIndex !== index &&
+            !clicked.includes(newIndex) &&
+            !mines.includes(newIndex)
+          ) {
+            handleClick(newIndex);
+          }
+        }
+      }
+    }
+
+    function predictSafeCell() {
       for (let i = 0; i < 25; i++) {
-        if (!mines.includes(i) && !clicked.includes(i)) {
-          handleClick(i);
+        const cell = document.getElementById('cell' + i);
+        if (!mines.includes(i) && !clicked.includes(i) && cell.innerText !== '⚑') {
+          cell.style.border = '2px solid blue';
           break;
         }
       }
     }
+
+    function startTimer() {
+      timerInterval = setInterval(() => {
+        seconds++;
+        document.getElementById('timer').innerText = seconds;
+      }, 1000);
+    }
+
+    function updateScore() {
+      score++;
+      document.getElementById('score').innerText = score;
+    }
+
+    function checkWin() {
+      if (clicked.length === (25 - mines.length)) {
+        showPopup("Congratulations! You cleared the board!");
+      }
+    }
+
+    function showPopup(msg) {
+      document.getElementById('popupMessage').innerText = msg;
+      document.getElementById('popup').style.display = 'block';
+      clearInterval(timerInterval);
+    }
+
+    function closePopup() {
+      document.getElementById('popup').style.display = 'none';
+    }
+
+    function toggleTheme() {
+      document.body.classList.toggle('dark');
+    }
   </script>
 </body>
-</html><!DOCTYPE html>
-<html>
-<head>
-  <title>Mines Game</title>
-  <style>
-    #grid {
-      display: grid;
-      grid-template-columns: repeat(5, 60px);
-      gap: 5px;
-      margin-top: 20px;
-    }
-    .cell {
-      width: 60px;
-      height: 60px;
-      font-size: 18px;
-      text-align: center;
-      background-color: lightgray;
-    }
-    .mine {
-      background-color: red;
-    }
-    .safe {
-      background-color: lightgreen;
-    }
-  </style>
-</head>
-<body>
-  <h2>Mines Game</h2>
-  <label>Number of Mines (1-10):</label>
-  <input type="number" id="mineCount" min="1" max="10" value="5">
-  <button onclick="startGame()">Start Game</button>
+</html>
 
-  <div id="grid"></div>
-
-  <script>
-    let mines = [];
-    let clicked = [];
-
-    function startGame() {
-      const grid = document.getElementById('grid');
-      grid.innerHTML = '';
-      mines = [];
-      clicked = [];
-
-      const mineCount = parseInt(document.getElementById('mineCount').value);
       
-      // Create 25 buttons
-      for (let i = 0; i < 25; i++) {
-        const btn = document.createElement('button');
-        btn.className = 'cell';
-        btn.id = 'cell' + i;
-        btn.onclick = () => handleClick(i);
-        grid.appendChild(btn);
-      }
-
-      // Place mines randomly
-      while (mines.length < mineCount) {
-        let r = Math.floor(Math.random() * 25);
-        if (!mines.includes(r)) {
-          mines.push(r);
-        }
-      }
-    }
-
-    function handleClick(index) {
-      const btn = document.getElementById('cell' + index);
-      if (mines.includes(index)) {
-        btn.classList.add('mine');
-        alert('Boom! You hit a mine.');
-        revealMines();
-      } else {
-        if (!clicked.includes(index)) {
-          clicked.push(index);
-          btn.classList.add('safe');
-          autoClick();
-        }
-      }
-    }
-
-    function revealMines() {
-      for (let i = 0; i < 25; i++) {
-        if (mines.includes(i)) {
-          document.getElementById('cell' + i).classList.add('mine');
-        }
-      }
-    }
-
-    function autoClick() {
-      for (let i = 0; i < 25; i++) {
-        if (!mines.includes(i) && !clicked.includes(i)) {
-          handleClick(i);
-          break;
-        }
-      }
-    }
-  </script>
-</body>
-  </html>
