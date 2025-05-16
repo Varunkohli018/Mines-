@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Mines Game</title>
+  <style>
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      gap: 5px;
+      margin-top: 20px;
+    }
+    .cell {
+      width: 60px;
+      height: 60px;
+      font-size: 18px;
+      text-align: center;
+      background-color: lightgray;
+    }
+    .mine {
+      background-color: red;
+    }
+    .safe {
+      background-color: lightgreen;
+    }
+  </style>
+</head>
+<body>
+  <h2>Mines Game</h2>
+  <label>Number of Mines (1-10):</label>
+  <input type="number" id="mineCount" min="1" max="10" value="5">
+  <button onclick="startGame()">Start Game</button>
+
+  <div id="grid"></div>
+
+  <script>
+    let mines = [];
+    let clicked = [];
+
+    function startGame() {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      mines = [];
+      clicked = [];
+
+      const mineCount = parseInt(document.getElementById('mineCount').value);
+      
+      // Create 25 buttons
+      for (let i = 0; i < 25; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'cell';
+        btn.id = 'cell' + i;
+        btn.onclick = () => handleClick(i);
+        grid.appendChild(btn);
+      }
+
+      // Place mines randomly
+      while (mines.length < mineCount) {
+        let r = Math.floor(Math.random() * 25);
+        if (!mines.includes(r)) {
+          mines.push(r);
+        }
+      }
+    }
+
+    function handleClick(index) {
+      const btn = document.getElementById('cell' + index);
+      if (mines.includes(index)) {
+        btn.classList.add('mine');
+        alert('Boom! You hit a mine.');
+        revealMines();
+      } else {
+        if (!clicked.includes(index)) {
+          clicked.push(index);
+          btn.classList.add('safe');
+          autoClick();
+        }
+      }
+    }
+
+    function revealMines() {
+      for (let i = 0; i < 25; i++) {
+        if (mines.includes(i)) {
+          document.getElementById('cell' + i).classList.add('mine');
+        }
+      }
+    }
+
+    function autoClick() {
+      for (let i = 0; i < 25; i++) {
+        if (!mines.includes(i) && !clicked.includes(i)) {
+          handleClick(i);
+          break;
+        }
+      }
+    }
+  </script>
+</body>
+</html><!DOCTYPE html>
+<html>
+<head>
+  <title>Mines Game</title>
+  <style>
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(5, 60px);
+      gap: 5px;
+      margin-top: 20px;
+    }
+    .cell {
+      width: 60px;
+      height: 60px;
+      font-size: 18px;
+      text-align: center;
+      background-color: lightgray;
+    }
+    .mine {
+      background-color: red;
+    }
+    .safe {
+      background-color: lightgreen;
+    }
+  </style>
+</head>
+<body>
+  <h2>Mines Game</h2>
+  <label>Number of Mines (1-10):</label>
+  <input type="number" id="mineCount" min="1" max="10" value="5">
+  <button onclick="startGame()">Start Game</button>
+
+  <div id="grid"></div>
+
+  <script>
+    let mines = [];
+    let clicked = [];
+
+    function startGame() {
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      mines = [];
+      clicked = [];
+
+      const mineCount = parseInt(document.getElementById('mineCount').value);
+      
+      // Create 25 buttons
+      for (let i = 0; i < 25; i++) {
+        const btn = document.createElement('button');
+        btn.className = 'cell';
+        btn.id = 'cell' + i;
+        btn.onclick = () => handleClick(i);
+        grid.appendChild(btn);
+      }
+
+      // Place mines randomly
+      while (mines.length < mineCount) {
+        let r = Math.floor(Math.random() * 25);
+        if (!mines.includes(r)) {
+          mines.push(r);
+        }
+      }
+    }
+
+    function handleClick(index) {
+      const btn = document.getElementById('cell' + index);
+      if (mines.includes(index)) {
+        btn.classList.add('mine');
+        alert('Boom! You hit a mine.');
+        revealMines();
+      } else {
+        if (!clicked.includes(index)) {
+          clicked.push(index);
+          btn.classList.add('safe');
+          autoClick();
+        }
+      }
+    }
+
+    function revealMines() {
+      for (let i = 0; i < 25; i++) {
+        if (mines.includes(i)) {
+          document.getElementById('cell' + i).classList.add('mine');
+        }
+      }
+    }
+
+    function autoClick() {
+      for (let i = 0; i < 25; i++) {
+        if (!mines.includes(i) && !clicked.includes(i)) {
+          handleClick(i);
+          break;
+        }
+      }
+    }
+  </script>
+</body>
+  </html>
